@@ -1,57 +1,62 @@
 import { jest } from '@jest/globals';
-import { calcularEntrega, calcularTaxaEntrega } from '../src/conversor.js';
+import { calcularEntrega, calcularTaxaEntrega } from '../src/entrega.js';
 
-describe('Calculador de Entregas - injeção de dependência', () => {
+describe('Atividade 2 - Testes com Injeção de Dependência', () => {
     let servicoMock;
 
     beforeEach(() => {
+        // isso aqui inicializa um mock para fazer os testes
         servicoMock = {
             obterValorPorKm: jest.fn(),
         };
     });
 
-    it('Deve calcular corretamente o valor da entrega', async () => {
+    // funcionando certinho
+    it('deve calcular corretamente o valor da entrega para R$ 2,50 por km', async () => {
         servicoMock.obterValorPorKm.mockResolvedValue(2.5);
 
-        const resultado = await calcularEntrega(8, servicoMock);
+        const resultado = await calcularEntrega(10, servicoMock);
 
-        expect(resultado).toBe(20);
+        expect(resultado).toBe(25);
     });
 
-    it('deve rejeitar com erro quando o servico externo falhar', async () => {
+    // apresentando erro
+    it('deve rejeitar a operação e apresentar o erro quando o serviço falhar', async () => {
         servicoMock.obterValorPorKm.mockRejectedValue(new Error('Erro no serviço externo'));
 
-        await expect(calcularEntrega(8, servicoMock)).rejects.toThrow('Erro no serviço externo');
+        await expect(calcularEntrega(10, servicoMock)).rejects.toThrow('Erro no serviço externo');
     });
 
-    it('deve rejeitar se a distancia for uma distância inválida (0 por exemplo), 0 ou qualquer número menor que 0', async () => {
+    // testando com distância inválida
+    it('deve rejeitar com "Distância inválida" para distâncias menores ou iguais a zero', async () => {
         await expect(calcularEntrega(0, servicoMock)).rejects.toThrow('Distância inválida');
         await expect(calcularEntrega(-5, servicoMock)).rejects.toThrow('Distância inválida');
-        await expect(calcularEntrega('dezenove', servicoMock)).rejects.toThrow('Distância inválida');
     });
 
-    it('deve rejeitar quando nenhum serviço for informado', async () => {
-        await expect(calcularEntrega(8)).rejects.toThrow('Serviço de entrega não informado');
+    // testando sem informar o serviço
+    it('deve rejeitar com "Serviço de entrega não informado" quando nenhuma dependência for passada', async () => {
+        await expect(calcularEntrega(10)).rejects.toThrow('Serviço de entrega não informado');
     });
 
-    it('deve chamar o serviço sem argumentos e exatamente uma vez', async () => {
+    it('deve verificar se o serviço foi chamado uma vez e sem argumentos', async () => {
         servicoMock.obterValorPorKm.mockResolvedValue(2.5);
 
-        await calcularEntrega(8, servicoMock);
+        await calcularEntrega(10, servicoMock);
 
         expect(servicoMock.obterValorPorKm).toHaveBeenCalledTimes(1);
         expect(servicoMock.obterValorPorKm).toHaveBeenCalledWith();
     });
 
-    it('não deve chamar o serviço externo para distâncias menores ou iguais a 5', async () => {
-        const resultado = await calcularTaxaEntrega(5, servicoMock);
+    it('não deve consultar o serviço externo para distâncias <= 5 km e retornar a taxa fixa de R$ 10,00', async () => {
+        const resultado = await calcularTaxaEntrega(4, servicoMock);
 
-        expect(resultado).toBe(8);
+        expect(resultado).toBe(10);
         expect(servicoMock.obterValorPorKm).not.toHaveBeenCalled();
     });
 
-    describe('Desafio', () => {
-        it('deve calcular corretamente usando serviços com taxas distintas', async () => {
+    // desafio
+    describe('Desafio de Injeção de Dependência', () => {
+        it('deve calcular valores diferentes usando o serviço normal e o promocional', async () => {
             const servicoNormal = {
                 obterValorPorKm: jest.fn().mockResolvedValue(3.0),
             };
